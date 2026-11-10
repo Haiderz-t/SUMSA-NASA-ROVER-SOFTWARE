@@ -18,6 +18,12 @@ SIM = 'classic' if os.environ.get('ROS_DISTRO') == 'humble' else 'harmonic'
 
 
 def generate_launch_description():
+    world_file = os.path.join(
+        get_package_share_directory('osr_gazebo'),
+        'worlds',
+        'lidar_test.sdf',
+    )
+
     gui = LaunchConfiguration('gui')
     if SIM == 'classic':
         gazebo = [IncludeLaunchDescription(
@@ -31,22 +37,23 @@ def generate_launch_description():
         gazebo = [
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_sim),
-                launch_arguments={'gz_args': '-r empty.sdf', 'on_exit_shutdown': 'true'}.items(),
+                launch_arguments={'gz_args': f'-r "{world_file}"', 'on_exit_shutdown': 'true'}.items(),
                 condition=IfCondition(gui),
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_sim),
-                launch_arguments={'gz_args': '-s -r empty.sdf',
-                                  'on_exit_shutdown': 'true'}.items(),
+                launch_arguments={'gz_args': f'-s -r "{world_file}"',
+                  'on_exit_shutdown': 'true'}.items(),
                 condition=UnlessCondition(gui),
             ),
             # Sim time for the controllers, and the IMU under the same topic as
             # the Classic plugin.
-            Node(
+           Node(
                 package='ros_gz_bridge',
                 executable='parameter_bridge',
                 arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-                           '/imu_plugin/out@sensor_msgs/msg/Imu[gz.msgs.IMU'],
+           '/imu_plugin/out@sensor_msgs/msg/Imu[gz.msgs.IMU',
+           '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan'],
                 output='screen',
             ),
         ]
@@ -104,21 +111,23 @@ def generate_launch_description():
             output='screen',
         )
 
-    load_joint_state_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'joint_state_broadcaster'],
+    controllers_yaml = os.path.join(osr_urdf_path, 'config', 'controller_velocity.yaml')
+
+    load_joint_state_controller = Node(
+        package='controller_manager', executable='spawner',
+        arguments=['joint_state_broadcaster'],
         output='screen',
     )
 
-    rover_wheel_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'wheel_controller'],
+    rover_wheel_controller = Node(
+        package='controller_manager', executable='spawner',
+        arguments=['wheel_controller', '--param-file', controllers_yaml],
         output='screen',
     )
 
-    servo_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'servo_controller'],
+    servo_controller = Node(
+        package='controller_manager', executable='spawner',
+        arguments=['servo_controller', '--param-file', controllers_yaml],
         output='screen',
     )
 

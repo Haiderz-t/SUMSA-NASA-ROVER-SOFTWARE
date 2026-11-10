@@ -508,5 +508,12 @@
     <xacro:insert_position_transmission name="front_wheel_joint_L"/>
     <xacro:insert_position_transmission name="rear_wheel_joint_R"/>
     <xacro:insert_position_transmission name="rear_wheel_joint_L"/>
+    <!-- Temporary LiDAR mounting position for simulation. -->
+    <link name="lidar_link"/>
 
+    <joint name="lidar_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="lidar_link"/>
+        <origin xyz="0 0 0.35" rpy="0 0 0"/>
+    </joint>
 </robot>

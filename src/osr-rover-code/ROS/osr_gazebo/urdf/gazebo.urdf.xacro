@@ -13,6 +13,17 @@
         <plugin>gazebo_ros2_control/GazeboSystem</plugin>
       </xacro:unless>
     </hardware>
+    <!-- Passive rocker-bogie suspension joints -->
+    <joint name="rocker_bogie_joint_L_2">
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="rocker_bogie_joint_R_2">
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+    </joint>
+    
     <joint name="middle_wheel_joint_left">
       <command_interface name="velocity">
         <param name="min">-10</param>
